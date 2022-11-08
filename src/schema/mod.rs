@@ -2,6 +2,7 @@ pub mod authn_request;
 mod conditions;
 mod issuer;
 mod name_id_policy;
+mod requested_authn_context;
 mod response;
 mod subject;
 
@@ -9,6 +10,7 @@ pub use authn_request::AuthnRequest;
 pub use conditions::*;
 pub use issuer::Issuer;
 pub use name_id_policy::NameIdPolicy;
+pub use requested_authn_context::RequestedAuthnContext;
 pub use response::Response;
 pub use subject::*;
 
