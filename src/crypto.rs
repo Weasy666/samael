@@ -1,6 +1,6 @@
 use base64::{engine::general_purpose, Engine as _};
 use std::collections::HashMap;
-use std::convert::TryInto;
+use std::str::FromStr;
 use thiserror::Error;
 
 #[cfg(feature = "xmlsec")]
@@ -9,8 +9,6 @@ use crate::xmlsec::{self, XmlNode, XmlSecKey, XmlSecKeyFormat, XmlSecSignatureCo
 use libxml::parser::Parser as XmlParser;
 #[cfg(feature = "xmlsec")]
 use std::ffi::CString;
-#[cfg(feature = "xmlsec")]
-use std::str::FromStr;
 #[cfg(feature = "xmlsec")]
 use openssl::symm::{Cipher, Crypter, Mode};
 

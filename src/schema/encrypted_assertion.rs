@@ -7,10 +7,12 @@ use std::io::Cursor;
 use openssl::{pkey::Private, rsa};
 #[cfg(feature = "xmlsec")]
 use crate::crypto::{decrypt, decrypt_aead};
+#[cfg(feature = "xmlsec")]
+use crate::schema::Assertion;
+#[cfg(feature = "xmlsec")]
+use crate::service_provider::Error;
 
 use crate::key_info::{EncryptedKeyInfo, KeyInfo};
-use crate::schema::Assertion;
-use crate::service_provider::Error;
 use crate::signature::DigestMethod;
 
 const NAME: &str = "saml2:EncryptedAssertion";
