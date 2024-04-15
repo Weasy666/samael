@@ -25,6 +25,10 @@ mod tests;
 use crate::crypto::reduce_xml_to_signed;
 #[cfg(feature = "xmlsec")]
 use crate::schema::EncryptedAssertion;
+#[cfg(feature = "xmlsec")]
+use crate::signature::Signature;
+#[cfg(feature = "xmlsec")]
+use std::str::FromStr;
 
 #[cfg(not(feature = "xmlsec"))]
 fn reduce_xml_to_signed<T>(xml_str: &str, _keys: &Vec<T>) -> Result<String, Error> {
@@ -549,6 +553,29 @@ impl ServiceProvider {
             force_authn: Some(self.force_authn),
             ..AuthnRequest::default()
         })
+    }
+
+    #[cfg(feature = "xmlsec")]
+    pub fn sign_authentication_request(
+        &self,
+        mut authn_request: AuthnRequest,
+    ) -> Result<AuthnRequest, Box<dyn std::error::Error>> {
+        if let Some((key, certificate)) = self.key.as_ref().zip(self.certificate.as_ref()) {
+            let private_key = key.private_key_to_der()?;
+            let certificate = certificate.to_der()?;
+            authn_request.signature = Some(Signature::template(
+                &authn_request.id,
+                &certificate,
+            ));
+
+            crypto::sign_xml(&authn_request.to_xml()?, &private_key)
+                .map_err(From::from)
+                .and_then(|authn_request| {
+                    AuthnRequest::from_str(&authn_request).map_err(From::from)
+                })
+        } else {
+            Ok(authn_request)
+        }
     }
 }
 
