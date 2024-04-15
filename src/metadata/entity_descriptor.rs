@@ -12,6 +12,21 @@ use std::str::FromStr;
 use thiserror::Error;
 
 #[derive(Clone, Debug, Deserialize, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
+#[serde(rename = "md:EntitiesDescriptor")]
+pub struct EntitiesDescriptor {
+    #[serde(rename = "EntityDescriptor")]
+    pub desc: EntityDescriptor,
+}
+
+impl FromStr for EntitiesDescriptor {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(quick_xml::de::from_str(s)?)
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(rename = "md:EntityDescriptor")]
 pub struct EntityDescriptor {
     #[serde(rename = "@entityID")]
