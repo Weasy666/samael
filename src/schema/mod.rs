@@ -1,6 +1,7 @@
 pub mod authn_request;
 mod conditions;
 mod encrypted_assertion;
+mod extensions;
 mod issuer;
 mod name_id_policy;
 mod response;
@@ -9,6 +10,7 @@ mod subject;
 pub use authn_request::AuthnRequest;
 pub use conditions::*;
 pub use encrypted_assertion::{CipherValue, EncryptedAssertion, EncryptedKey};
+pub use extensions::Extensions;
 pub use issuer::Issuer;
 pub use name_id_policy::NameIdPolicy;
 pub use response::Response;

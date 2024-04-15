@@ -2,6 +2,7 @@
 
 ### Unreleased
 - add `EncryptedAssertion` and ability to decrypt it
+- Add ability to serialize and deserialize `Extensions` in an `AuthnRequest`
 
 ### 0.0.15
 
