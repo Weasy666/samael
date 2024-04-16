@@ -571,7 +571,12 @@ impl ServiceProvider {
             crypto::sign_xml(&authn_request.to_xml()?, &private_key)
                 .map_err(From::from)
                 .and_then(|authn_request| {
+                    println!("{authn_request}");
                     AuthnRequest::from_str(&authn_request).map_err(From::from)
+                        .map(|ar| {
+                            println!("{:#?}", ar);
+                            ar
+                        })
                 })
         } else {
             Ok(authn_request)
