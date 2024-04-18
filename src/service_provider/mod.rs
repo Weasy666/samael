@@ -25,10 +25,6 @@ mod tests;
 use crate::crypto::reduce_xml_to_signed;
 #[cfg(feature = "xmlsec")]
 use crate::schema::EncryptedAssertion;
-#[cfg(feature = "xmlsec")]
-use crate::signature::Signature;
-#[cfg(feature = "xmlsec")]
-use std::str::FromStr;
 
 #[cfg(not(feature = "xmlsec"))]
 fn reduce_xml_to_signed<T>(xml_str: &str, _keys: &Vec<T>) -> Result<String, Error> {
@@ -84,6 +80,8 @@ pub enum Error {
     ResponseExpired { time: String },
     #[error("SAML Response StatusCode is not successful: {}", code)]
     ResponseBadStatusCode { code: String },
+    #[error("Failed to sign AuthnRequest: Signature is missing")]
+    RequestMissingSignature,
     #[error("Encrypted SAML Assertions are not yet supported")]
     EncryptedAssertionsNotYetSupported,
     #[error("SAML Response and all assertions must be signed")]
@@ -558,28 +556,18 @@ impl ServiceProvider {
     #[cfg(feature = "xmlsec")]
     pub fn sign_authentication_request(
         &self,
-        mut authn_request: AuthnRequest,
-    ) -> Result<AuthnRequest, Box<dyn std::error::Error>> {
-        if let Some((key, certificate)) = self.key.as_ref().zip(self.certificate.as_ref()) {
-            let private_key = key.private_key_to_der()?;
-            let certificate = certificate.to_der()?;
-            authn_request.signature = Some(Signature::template(
-                &authn_request.id,
-                &certificate,
-            ));
+        authn_request: AuthnRequest,
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        if authn_request.signature.is_none() {
+            Err(Error::RequestMissingSignature)?
+        }
 
+        if let Some(key) = self.key.as_ref() {
+            let private_key = key.private_key_to_der()?;
             crypto::sign_xml(&authn_request.to_xml()?, &private_key)
                 .map_err(From::from)
-                .and_then(|authn_request| {
-                    println!("{authn_request}");
-                    AuthnRequest::from_str(&authn_request).map_err(From::from)
-                        .map(|ar| {
-                            println!("{:#?}", ar);
-                            ar
-                        })
-                })
         } else {
-            Ok(authn_request)
+            Ok(authn_request.to_xml()?)
         }
     }
 }
@@ -608,6 +596,33 @@ fn parse_certificates(key_descriptor: &KeyDescriptor) -> Result<Vec<x509::X509>,
 impl AuthnRequest {
     pub fn post(&self, relay_state: &str) -> Result<Option<String>, Box<dyn std::error::Error>> {
         let encoded = general_purpose::STANDARD.encode(self.to_xml()?.as_bytes());
+        if let Some(dest) = &self.destination {
+            Ok(Some(format!(
+                r#"
+            <form method="post" action="{}" id="SAMLRequestForm">
+                <input type="hidden" name="SAMLRequest" value="{}" />
+                <input type="hidden" name="RelayState" value="{}" />
+                <input id="SAMLSubmitButton" type="submit" value="Submit" />
+            </form>
+            <script>
+                document.getElementById('SAMLSubmitButton').style.visibility="hidden";
+                document.getElementById('SAMLRequestForm').submit();
+            </script>
+        "#,
+                dest, encoded, relay_state
+            )))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn signed_post(
+        &self,
+        relay_state: &str,
+        private_key_der: &[u8]
+    ) -> Result<Option<String>, Box<dyn std::error::Error>> {
+        let signed_request = crypto::sign_xml(&self.to_xml()?, &private_key_der)?;
+        let encoded = general_purpose::STANDARD.encode(signed_request.as_bytes());
         if let Some(dest) = &self.destination {
             Ok(Some(format!(
                 r#"
