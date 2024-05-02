@@ -1,10 +1,12 @@
 # Changelog
 
 ### Unreleased
+
 - add `EncryptedAssertion` and ability to decrypt it
 - Add ability to serialize and deserialize `Extensions` in an `AuthnRequest`
 - Add support for basic `RequestedAuthnContext` de-/serialization in `AuthnRequest`
 - Add `signed_post` function to `AuthnRequest`
+- Add `trust_level` attribute to `Attribute`
 
 ### 0.0.15
 
