@@ -79,7 +79,6 @@ impl AuthnContextComparison {
     }
 }
 
-
 impl FromStr for AuthnContextComparison {
     type Err = quick_xml::DeError;
 

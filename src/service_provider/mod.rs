@@ -633,33 +633,6 @@ impl AuthnRequest {
         }
     }
 
-    pub fn signed_post(
-        &self,
-        relay_state: &str,
-        private_key_der: &[u8]
-    ) -> Result<Option<String>, Box<dyn std::error::Error>> {
-        let signed_request = crypto::sign_xml(&self.to_xml()?, &private_key_der)?;
-        let encoded = general_purpose::STANDARD.encode(signed_request.as_bytes());
-        if let Some(dest) = &self.destination {
-            Ok(Some(format!(
-                r#"
-            <form method="post" action="{}" id="SAMLRequestForm">
-                <input type="hidden" name="SAMLRequest" value="{}" />
-                <input type="hidden" name="RelayState" value="{}" />
-                <input id="SAMLSubmitButton" type="submit" value="Submit" />
-            </form>
-            <script>
-                document.getElementById('SAMLSubmitButton').style.visibility="hidden";
-                document.getElementById('SAMLRequestForm').submit();
-            </script>
-        "#,
-                dest, encoded, relay_state
-            )))
-        } else {
-            Ok(None)
-        }
-    }
-
     pub fn redirect(&self, relay_state: &str) -> Result<Option<Url>, Box<dyn std::error::Error>> {
         let mut compressed_buf = vec![];
         {
