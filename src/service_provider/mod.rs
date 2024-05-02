@@ -595,9 +595,26 @@ fn parse_certificates(key_descriptor: &KeyDescriptor) -> Result<Vec<x509::X509>,
 
 impl AuthnRequest {
     pub fn post(&self, relay_state: &str) -> Result<Option<String>, Box<dyn std::error::Error>> {
-        let encoded = general_purpose::STANDARD.encode(self.to_xml()?.as_bytes());
+        Ok(self.make_post(&self.to_xml()?, relay_state))
+    }
+
+    pub fn signed_post(
+        &self,
+        relay_state: &str,
+        private_key_der: &[u8],
+    ) -> Result<Option<String>, Box<dyn std::error::Error>> {
+        if self.signature.is_none() {
+            Err(Error::RequestMissingSignature)?
+        }
+
+        let signed_request = crypto::sign_xml(&self.to_xml()?, &private_key_der)?;
+        Ok(self.make_post(&signed_request, relay_state))
+    }
+
+    fn make_post(&self, request: &str, relay_state: &str) -> Option<String> {
+        let encoded = general_purpose::STANDARD.encode(request.as_bytes());
         if let Some(dest) = &self.destination {
-            Ok(Some(format!(
+            Some(format!(
                 r#"
             <form method="post" action="{}" id="SAMLRequestForm">
                 <input type="hidden" name="SAMLRequest" value="{}" />
@@ -610,9 +627,9 @@ impl AuthnRequest {
             </script>
         "#,
                 dest, encoded, relay_state
-            )))
+            ))
         } else {
-            Ok(None)
+            None
         }
     }
 
