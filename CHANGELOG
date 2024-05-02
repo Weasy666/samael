@@ -7,6 +7,7 @@
 - Add support for basic `RequestedAuthnContext` de-/serialization in `AuthnRequest`
 - Add `signed_post` function to `AuthnRequest`
 - Add `trust_level` attribute to `Attribute`
+- Use enum for signature and digest algorithm
 
 ### 0.0.15
 
